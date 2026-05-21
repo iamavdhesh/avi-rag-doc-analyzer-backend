@@ -10,6 +10,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.enterprise.docqa</groupId>
+            <artifactId>common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>

@@ -3,12 +3,14 @@ package com.enterprise.docqa.authservice.service;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
@@ -25,13 +27,18 @@ public class JwtService {
     @Value("${jwt.refresh-expiration-ms}")
     private long refreshExpirationMs;
 
+    private SecretKey getSigningKey() {
+        byte[] keyBytes = signingKey.getBytes(StandardCharsets.UTF_8);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+
     public String createAccessToken(String username, String role) {
         return Jwts.builder()
                 .setSubject(username)
                 .claim("role", role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
-                .signWith(SignatureAlgorithm.HS512, signingKey.getBytes(StandardCharsets.UTF_8))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
                 .compact();
     }
 
@@ -40,7 +47,7 @@ public class JwtService {
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + refreshExpirationMs))
-                .signWith(SignatureAlgorithm.HS512, signingKey.getBytes(StandardCharsets.UTF_8))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
                 .compact();
     }
 
@@ -52,8 +59,9 @@ public class JwtService {
     }
 
     public Claims verify(String token) {
-        return Jwts.parser()
-                .setSigningKey(signingKey.getBytes(StandardCharsets.UTF_8))
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
     }

@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/chat")
 public class AIController {
@@ -20,9 +23,13 @@ public class AIController {
     }
 
     @PostMapping("/query")
-    public Mono<ResponseEntity<?>> query(@RequestBody ChatRequest request) {
+    public Mono<ResponseEntity<Object>> query(@RequestBody ChatRequest request) {
         return orchestrationService.askQuestion(request)
-                .map(ResponseEntity::ok)
-                .onErrorResume(error -> Mono.just(ResponseEntity.internalServerError().body(error.getMessage())));
+                .map(resp -> ResponseEntity.ok().body((Object) resp))
+                .onErrorResume(error -> {
+                    Map<String, Object> errorBody = new HashMap<>();
+                    errorBody.put("error", error.getMessage());
+                    return Mono.just(ResponseEntity.internalServerError().body((Object) errorBody));
+                });
     }
 }
