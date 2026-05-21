@@ -1,0 +1,10 @@
+server:
+  port: 8085
+openai:
+  api-key: ${OPENAI_API_KEY}
+  embeddings-model: text-embedding-3-large
+  completion-model: gpt-4o
+vector-search:
+  url: ${VECTOR_SERVICE_URL:http://localhost:8084}
+chat-service:
+  url: ${CHAT_SERVICE_URL:http://localhost:8086}

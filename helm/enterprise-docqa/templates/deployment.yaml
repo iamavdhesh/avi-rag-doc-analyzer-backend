@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.services.apiGateway.name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.services.apiGateway.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.services.apiGateway.name }}
+    spec:
+      containers:
+        - name: {{ .Values.services.apiGateway.name }}
+          image: {{ .Values.image.repository }}-{{ .Values.services.apiGateway.name }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.services.apiGateway.port }}
+          env:
+            - name: AUTH_SERVICE_URL
+              value: "http://auth-service:8081"
+            - name: DOCUMENT_SERVICE_URL
+              value: "http://document-ingestion-service:8082"

@@ -1,0 +1,11 @@
+server:
+  port: 8084
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/docqa}
+    username: ${SPRING_DATASOURCE_USERNAME:docqa}
+    password: ${SPRING_DATASOURCE_PASSWORD:docqa-password}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false

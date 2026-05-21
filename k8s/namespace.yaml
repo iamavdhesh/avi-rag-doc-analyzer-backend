@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: enterprise-docqa
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: enterprise-docqa-config
+  namespace: enterprise-docqa
+data:
+  LOG_LEVEL: info

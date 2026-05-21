@@ -1,0 +1,7 @@
+server:
+  port: 8080
+services:
+  auth: ${AUTH_SERVICE_URL:http://localhost:8081}
+  document: ${DOCUMENT_SERVICE_URL:http://localhost:8082}
+  chat: ${CHAT_SERVICE_URL:http://localhost:8086}
+  ai: ${AI_SERVICE_URL:http://localhost:8085}

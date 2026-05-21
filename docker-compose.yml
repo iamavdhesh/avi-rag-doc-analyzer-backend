@@ -1,0 +1,144 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: docqa
+      POSTGRES_USER: docqa
+      POSTGRES_PASSWORD: docqa-password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:8.4.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 2181:2181
+
+  kafka:
+    image: confluentinc/cp-kafka:8.4.0
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - 9092:9092
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - 6379:6379
+
+  auth-service:
+    build:
+      context: ./auth-service
+    ports:
+      - 8081:8081
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/docqa
+      SPRING_DATASOURCE_USERNAME: docqa
+      SPRING_DATASOURCE_PASSWORD: docqa-password
+      JWT_SECRET: super-secret-jwt-key
+
+  api-gateway-service:
+    build:
+      context: ./api-gateway-service
+    ports:
+      - 8080:8080
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      AUTH_SERVICE_URL: http://auth-service:8081
+      DOCUMENT_SERVICE_URL: http://document-ingestion-service:8082
+      CHAT_SERVICE_URL: http://chat-service:8086
+
+  document-ingestion-service:
+    build:
+      context: ./document-ingestion-service
+    ports:
+      - 8082:8082
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/docqa
+      SPRING_DATASOURCE_USERNAME: docqa
+      SPRING_DATASOURCE_PASSWORD: docqa-password
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      STORAGE_PATH: /data/uploads
+
+  embedding-service:
+    build:
+      context: ./embedding-service
+    ports:
+      - 8083:8083
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+
+  vector-search-service:
+    build:
+      context: ./vector-search-service
+    ports:
+      - 8084:8084
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/docqa
+      SPRING_DATASOURCE_USERNAME: docqa
+      SPRING_DATASOURCE_PASSWORD: docqa-password
+
+  ai-orchestrator-service:
+    build:
+      context: ./ai-orchestrator-service
+    ports:
+      - 8085:8085
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      VECTOR_SERVICE_URL: http://vector-search-service:8084
+      CHAT_SERVICE_URL: http://chat-service:8086
+
+  chat-service:
+    build:
+      context: ./chat-service
+    ports:
+      - 8086:8086
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/docqa
+      SPRING_DATASOURCE_USERNAME: docqa
+      SPRING_DATASOURCE_PASSWORD: docqa-password
+
+  analytics-service:
+    build:
+      context: ./analytics-service
+    ports:
+      - 8087:8087
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/docqa
+      SPRING_DATASOURCE_USERNAME: docqa
+      SPRING_DATASOURCE_PASSWORD: docqa-password
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+  kafka-event-processor-service:
+    build:
+      context: ./kafka-event-processor-service
+    ports:
+      - 8088:8088
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/docqa
+      SPRING_DATASOURCE_USERNAME: docqa
+      SPRING_DATASOURCE_PASSWORD: docqa-password
+
+volumes:
+  postgres-data:

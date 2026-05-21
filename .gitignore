@@ -1,0 +1,9 @@
+**/target/
+**/.idea/
+*.log
+*.tmp
+*.swp
+/.DS_Store
+/.vscode/
+/.env
+/.idea/
